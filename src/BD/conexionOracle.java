@@ -992,4 +992,142 @@ public class conexionOracle {
         }
     }
 
+    public void crearDespacho(int idDespacho, int idVenta, int idVendedor, java.sql.Date fechaDespacho, String estado) throws SQLException {
+        CallableStatement cs = null;
+
+        try {
+            // Preparar la llamada al procedimiento
+            String query = "{call PKG_Multinivel.crear_despacho(?, ?, ?, ?, ?)}";
+            cs = conn.prepareCall(query);
+
+            // Configurar los parámetros
+            cs.setInt(1, idDespacho);        // Parámetro: p_id_despacho
+            cs.setInt(2, idVenta);           // Parámetro: p_id_venta
+            cs.setInt(3, idVendedor);        // Parámetro: p_id_vendedor
+            cs.setDate(4, fechaDespacho);    // Parámetro: p_fecha_despacho
+            cs.setString(5, estado);         // Parámetro: p_estado
+
+            // Ejecutar el procedimiento
+            cs.execute();
+            System.out.println("Despacho creado exitosamente.");
+        } catch (SQLException e) {
+            System.err.println("Error al crear el despacho: " + e.getMessage());
+            throw e; // Propagar el error
+        } finally {
+            if (cs != null) {
+                cs.close(); // Cerrar CallableStatement
+            }
+        }
+    }
+
+    public static void cargarDespachosEnTabla(JTable tablaDespachos) {
+        // Obtener el modelo de la tabla
+        DefaultTableModel modelo = (DefaultTableModel) tablaDespachos.getModel();
+        modelo.setRowCount(0); // Limpiar los datos actuales de la tabla
+
+        // Conectar a la base de datos
+        conexionOracle conexion = new conexionOracle();
+        conexion.conectar();
+
+        try {
+            // Consulta SQL para obtener los datos de los despachos
+            String query = "SELECT id_despacho, id_venta, id_vendedor, fecha_despacho, estado FROM despachos";
+            Statement stmt = conexion.getConn().createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Recorrer los resultados y agregarlos al modelo de la tabla
+            while (rs.next()) {
+                Object[] fila = {
+                    rs.getInt("id_despacho"), // ID del despacho
+                    rs.getInt("id_venta"), // ID de la venta
+                    rs.getInt("id_vendedor"), // ID del vendedor
+                    rs.getDate("fecha_despacho"), // Fecha de despacho
+                    rs.getString("estado") // Estado del despacho
+                };
+                modelo.addRow(fila); // Agregar fila al modelo
+            }
+
+            // Cerrar ResultSet y Statement
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            // Manejo de errores al cargar los datos
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "Error al cargar los datos de los despachos: " + e.getMessage(),
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // Desconectar la conexión
+            conexion.desconectar();
+        }
+    }
+
+    public static void actualizarEstadoDespacho(int idDespacho, String nuevoEstado) throws SQLException {
+        CallableStatement cs = null;
+        conexionOracle conexion = null;
+
+        try {
+            // Crear la conexión a la base de datos
+            conexion = new conexionOracle();
+            conexion.conectar();
+
+            // Preparar la llamada al procedimiento almacenado
+            String query = "{call PKG_Multinivel.actualizar_estado_despacho(?, ?)}";
+            cs = conexion.getConn().prepareCall(query); // Usar la conexión desde el objeto 'conexion'
+
+            // Configurar los parámetros
+            cs.setInt(1, idDespacho);         // Parámetro: p_id_despacho
+            cs.setString(2, nuevoEstado);     // Parámetro: p_nuevo_estado
+
+            // Ejecutar el procedimiento
+            cs.execute();
+            System.out.println("Estado del despacho actualizado exitosamente.");
+        } catch (SQLException e) {
+            // Manejo de excepciones en caso de error
+            System.err.println("Error al actualizar el estado del despacho: " + e.getMessage());
+            throw e; // Propagar el error
+        } finally {
+            if (cs != null) {
+                cs.close(); // Cerrar CallableStatement
+            }
+            if (conexion != null) {
+                conexion.desconectar(); // Desconectar la conexión
+            }
+        }
+    }
+
+    public static void actualizarCantidadProducto(int idProducto, int cantidad) throws SQLException {
+        CallableStatement cs = null;
+        conexionOracle conexion = null;
+
+        try {
+            // Crear la conexión a la base de datos
+            conexion = new conexionOracle();
+            conexion.conectar();
+
+            // Preparar la llamada al procedimiento almacenado
+            String query = "{call PKG_Multinivel.actualizar_cantidad_producto(?, ?)}";
+            cs = conexion.getConn().prepareCall(query); // Usar la conexión desde el objeto 'conexion'
+
+            // Configurar los parámetros
+            cs.setInt(1, idProducto);     // Parámetro: p_id_producto
+            cs.setInt(2, cantidad);       // Parámetro: p_cantidad
+
+            // Ejecutar el procedimiento
+            cs.execute();
+            System.out.println("Cantidad del producto actualizada exitosamente.");
+        } catch (SQLException e) {
+            // Manejo de excepciones en caso de error
+            System.err.println("Error al actualizar la cantidad del producto: " + e.getMessage());
+            throw e; // Propagar el error
+        } finally {
+            if (cs != null) {
+                cs.close(); // Cerrar CallableStatement
+            }
+            if (conexion != null) {
+                conexion.desconectar(); // Desconectar la conexión
+            }
+        }
+    }
+
 }
